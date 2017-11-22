@@ -90,6 +90,17 @@ func (m ConcurrentMap) Get(key string) (interface{}, bool) {
 	return val, ok
 }
 
+// Retrieves an element from map under given key.
+func (m ConcurrentMap) Fetch(key string, reference interface{}) bool {
+	// Get shard
+	shard := m.GetShard(key)
+	shard.RLock()
+	// Get item from shard.
+	reference, ok := shard.items[key]
+	shard.RUnlock()
+	return ok
+}
+
 // Returns the number of elements within the map.
 func (m ConcurrentMap) Count() int {
 	count := 0
