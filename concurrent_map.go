@@ -149,7 +149,7 @@ func (m ConcurrentMap) IsEmpty() bool {
 	return m.Count() == 0
 }
 
-// Used by the Iter & IterBuffered functions to wrap two variables together over a channel,
+// Used by the Iter & Iter functions to wrap two variables together over a channel,
 type Tuple struct {
 	Key string
 	Val interface{}
@@ -214,7 +214,7 @@ func (m ConcurrentMap) Items() map[string]interface{} {
 	tmp := make(map[string]interface{})
 
 	// Insert items to temporary map.
-	for item := range m.IterBuffered() {
+	for item := range m.Iter() {
 		tmp[item.Key] = item.Val
 	}
 
@@ -277,7 +277,7 @@ func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 	tmp := make(map[string]interface{})
 
 	// Insert items to temporary map.
-	for item := range m.IterBuffered() {
+	for item := range m.Iter() {
 		tmp[item.Key] = item.Val
 	}
 	return json.Marshal(tmp)
