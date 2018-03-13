@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var SHARD_COUNT = 32
+var SHARD_COUNT = 64
 
 // A "thread" safe map of type string:Anything.
 // To avoid lock bottlenecks this map is dived to several (SHARD_COUNT) map shards.
@@ -291,6 +291,18 @@ func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 		tmp[item.Key] = item.Val
 	}
 	return json.Marshal(tmp)
+}
+
+func (m ConcurrentMap)GetMap() map[string]interface{} {
+	// Create a temporary map, which will hold all item spread across shards.
+	tmp := make(map[string]interface{})
+
+	// Insert items to temporary map.
+	for item := range m.IterBuffered() {
+		tmp[item.Key] = item.Val
+	}
+
+	return tmp
 }
 
 func fnv32(key string) uint32 {
