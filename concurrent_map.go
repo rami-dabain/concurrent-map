@@ -149,24 +149,14 @@ func (m ConcurrentMap) IsEmpty() bool {
 	return m.Count() == 0
 }
 
-// Used by the Iter & IterBuffered functions to wrap two variables together over a channel,
+// Used by the Iter & Iter functions to wrap two variables together over a channel,
 type Tuple struct {
 	Key string
 	Val interface{}
 }
 
 // Returns an iterator which could be used in a for range loop.
-//
-// Deprecated: using IterBuffered() will get a better performence
 func (m ConcurrentMap) Iter() <-chan Tuple {
-	chans := snapshot(m)
-	ch := make(chan Tuple)
-	go fanIn(chans, ch)
-	return ch
-}
-
-// Returns a buffered iterator which could be used in a for range loop.
-func (m ConcurrentMap) IterBuffered() <-chan Tuple {
 	chans := snapshot(m)
 	total := 0
 	for _, c := range chans {
@@ -224,7 +214,7 @@ func (m ConcurrentMap) Items() map[string]interface{} {
 	tmp := make(map[string]interface{})
 
 	// Insert items to temporary map.
-	for item := range m.IterBuffered() {
+	for item := range m.Iter() {
 		tmp[item.Key] = item.Val
 	}
 
@@ -287,7 +277,7 @@ func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 	tmp := make(map[string]interface{})
 
 	// Insert items to temporary map.
-	for item := range m.IterBuffered() {
+	for item := range m.Iter() {
 		tmp[item.Key] = item.Val
 	}
 	return json.Marshal(tmp)
