@@ -3,6 +3,7 @@ package cmap
 import (
 	"encoding/json"
 	"sync"
+	"fmt"
 )
 
 var SHARD_COUNT = 64
@@ -43,6 +44,16 @@ func (m ConcurrentMap) MSet(data map[string]interface{}) {
 // Sets the given value under the specified key.
 func (m ConcurrentMap) Set(key string, value interface{}) {
 	// Get map shard.
+	shard := m.GetShard(key)
+	shard.Lock()
+	shard.items[key] = value
+	shard.Unlock()
+}
+
+// Sets the given value under the specified key.
+func (m ConcurrentMap) Seti(keyi int64, value interface{}) {
+	// Get map shard.
+	key := fmt.Sprintf("_i_%d", keyi)
 	shard := m.GetShard(key)
 	shard.Lock()
 	shard.items[key] = value
@@ -91,6 +102,18 @@ func (m ConcurrentMap) Get(key string) (interface{}, bool) {
 }
 
 // Retrieves an element from map under given key.
+func (m ConcurrentMap) Geti(keyi int64) (interface{}, bool) {
+	// Get shard
+	key := fmt.Sprintf("_i_%d", keyi)
+	shard := m.GetShard(key)
+	shard.RLock()
+	// Get item from shard.
+	val, ok := shard.items[key]
+	shard.RUnlock()
+	return val, ok
+}
+
+// Retrieves an element from map under given key.
 func (m ConcurrentMap) Fetch(key string, reference interface{}) bool {
 	// Get shard
 	shard := m.GetShard(key)
@@ -116,6 +139,18 @@ func (m ConcurrentMap) Count() int {
 // Looks up an item under specified key
 func (m ConcurrentMap) Has(key string) bool {
 	// Get shard
+	shard := m.GetShard(key)
+	shard.RLock()
+	// See if element is within shard.
+	_, ok := shard.items[key]
+	shard.RUnlock()
+	return ok
+}
+
+// Looks up an item under specified key
+func (m ConcurrentMap) Hasi(keyi int64) bool {
+	// Get shard
+	key := fmt.Sprintf("_i_%d", keyi)
 	shard := m.GetShard(key)
 	shard.RLock()
 	// See if element is within shard.
@@ -293,7 +328,7 @@ func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 	return json.Marshal(tmp)
 }
 
-func (m ConcurrentMap)GetMap() map[string]interface{} {
+func (m ConcurrentMap) GetMap() map[string]interface{} {
 	// Create a temporary map, which will hold all item spread across shards.
 	tmp := make(map[string]interface{})
 
